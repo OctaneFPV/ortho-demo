@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Before / After Ortho Comparison</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: white;
+    text-align: center;
+}
+
+h1 {
+    margin: 20px 0;
+}
+
+.container {
+    position: relative;
+    width: 90%;
+    max-width: 1000px;
+    margin: auto;
+}
+
+img {
+    width: 100%;
+    display: block;
+}
+
+.after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    overflow: hidden;
+}
+
+.slider {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 3px;
+    height: 100%;
+    background: white;
+    cursor: ew-resize;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Before vs After</h1>
+
+<div class="container" id="container">
+    <img src="before.jpg">
+    <div class="after" id="after">
+        <img src="after.jpg">
+    </div>
+    <div class="slider" id="slider"></div>
+</div>
+
+<script>
+const slider = document.getElementById("slider");
+const after = document.getElementById("after");
+const container = document.getElementById("container");
+
+let isDragging = false;
+
+slider.addEventListener("mousedown", () => isDragging = true);
+window.addEventListener("mouseup", () => isDragging = false);
+
+window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+
+    const rect = container.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+
+    if (x < 0) x = 0;
+    if (x > rect.width) x = rect.width;
+
+    after.style.width = x + "px";
+    slider.style.left = x + "px";
+});
+</script>
+
+</body>
+</html>
