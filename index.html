@@ -14,13 +14,13 @@
     }
 
     h1 {
-      margin: 20px 0;
+      margin: 16px 0 14px;
       font-size: 28px;
+      font-weight: 700;
     }
 
     .wrapper {
-      width: 90%;
-      max-width: 1400px;
+      width: min(92vw, 1400px);
       margin: 0 auto 40px;
     }
 
@@ -28,34 +28,38 @@
       position: relative;
       display: inline-block;
       width: 100%;
-      max-width: 1400px;
       line-height: 0;
       user-select: none;
       overflow: hidden;
+      border-radius: 8px;
+      cursor: ew-resize;
     }
 
-    .base-image {
+    .container img {
       display: block;
       width: 100%;
       height: auto;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+
+    .before-image {
+      position: relative;
+      z-index: 1;
     }
 
     .after-layer {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 50%;
-      height: 100%;
-      overflow: hidden;
+      inset: 0;
+      z-index: 2;
+      clip-path: inset(0 50% 0 0);
+      -webkit-clip-path: inset(0 50% 0 0);
+      pointer-events: none;
     }
 
     .after-layer img {
-      position: absolute;
-      top: 0;
-      left: 0;
       width: 100%;
       height: auto;
-      max-width: none;
       display: block;
     }
 
@@ -66,8 +70,8 @@
       transform: translateX(-50%);
       width: 3px;
       height: 100%;
-      background: rgba(255,255,255,0.9);
-      z-index: 20;
+      background: rgba(255,255,255,0.95);
+      z-index: 3;
       pointer-events: none;
     }
 
@@ -78,34 +82,36 @@
       transform: translate(-50%, -50%);
       width: 44px;
       height: 44px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.95);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.96);
       color: #111;
-      font-size: 24px;
-      font-weight: bold;
-      line-height: 44px;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
       box-shadow: 0 2px 10px rgba(0,0,0,0.35);
     }
 
     .label {
       position: absolute;
-      top: 14px;
-      z-index: 25;
+      top: 12px;
+      z-index: 4;
       background: rgba(0,0,0,0.55);
-      padding: 8px 12px;
+      padding: 7px 10px;
       border-radius: 6px;
-      font-size: 14px;
-      font-weight: bold;
+      font-size: 13px;
+      font-weight: 700;
       line-height: 1;
+      pointer-events: none;
     }
 
     .label-before {
-      left: 14px;
+      left: 12px;
     }
 
     .label-after {
-      right: 14px;
+      right: 12px;
     }
   </style>
 </head>
@@ -114,10 +120,10 @@
 
   <div class="wrapper">
     <div class="container" id="container">
-      <img src="before.png" alt="Before" class="base-image" />
+      <img src="before.png" alt="Before" class="before-image" />
 
       <div class="after-layer" id="afterLayer">
-        <img src="after.png" alt="After" id="afterImage" />
+        <img src="after.png" alt="After" />
       </div>
 
       <div class="label label-before">Before</div>
@@ -136,7 +142,7 @@
 
     let dragging = false;
 
-    function setSlider(clientX) {
+    function setSliderFromClientX(clientX) {
       const rect = container.getBoundingClientRect();
       let x = clientX - rect.left;
 
@@ -144,28 +150,45 @@
       if (x > rect.width) x = rect.width;
 
       const percent = (x / rect.width) * 100;
+      const rightInset = 100 - percent;
 
-      afterLayer.style.width = percent + "%";
-      sliderLine.style.left = percent + "%";
+      afterLayer.style.clipPath = `inset(0 ${rightInset}% 0 0)`;
+      afterLayer.style.webkitClipPath = `inset(0 ${rightInset}% 0 0)`;
+      sliderLine.style.left = `${percent}%`;
     }
 
     container.addEventListener("mousedown", (e) => {
       dragging = true;
-      setSlider(e.clientX);
+      setSliderFromClientX(e.clientX);
     });
 
     window.addEventListener("mousemove", (e) => {
       if (!dragging) return;
-      setSlider(e.clientX);
+      setSliderFromClientX(e.clientX);
     });
 
     window.addEventListener("mouseup", () => {
       dragging = false;
     });
 
+    container.addEventListener("touchstart", (e) => {
+      dragging = true;
+      setSliderFromClientX(e.touches[0].clientX);
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+      if (!dragging) return;
+      setSliderFromClientX(e.touches[0].clientX);
+    }, { passive: true });
+
+    window.addEventListener("touchend", () => {
+      dragging = false;
+    });
+
     window.addEventListener("load", () => {
-      sliderLine.style.left = "50%";
-      afterLayer.style.width = "50%";
+      setSliderFromClientX(
+        container.getBoundingClientRect().left + container.getBoundingClientRect().width / 2
+      );
     });
   </script>
 </body>
