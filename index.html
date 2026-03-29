@@ -1,90 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Before / After Ortho Comparison</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Before / After Ortho Comparison</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+    }
 
-<style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: white;
-    text-align: center;
-}
+    h1 {
+      margin: 20px 0;
+      font-size: 28px;
+    }
 
-h1 {
-    margin: 20px 0;
-}
+    .wrapper {
+      width: 92%;
+      max-width: 1200px;
+      margin: 20px auto 40px;
+    }
 
-.container {
-    position: relative;
-    width: 90%;
-    max-width: 1000px;
-    margin: auto;
-}
+    .container {
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      border-radius: 8px;
+    }
 
-img {
-    width: 100%;
-    display: block;
-}
+    .container img {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+    }
 
-.after {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50%;
-    overflow: hidden;
-}
+    .after {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
+      height: 100%;
+      overflow: hidden;
+    }
 
-.slider {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: 3px;
-    height: 100%;
-    background: white;
-    cursor: ew-resize;
-}
+    .after img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
 
-</style>
+    .slider {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 100%;
+      background: white;
+      z-index: 10;
+    }
+
+    .handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: white;
+      color: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    }
+
+    .label {
+      position: absolute;
+      top: 14px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.55);
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      z-index: 11;
+    }
+
+    .label.before {
+      left: 14px;
+    }
+
+    .label.after-label {
+      right: 14px;
+    }
+  </style>
 </head>
-
 <body>
+  <h1>Before vs After</h1>
 
-<h1>Before vs After</h1>
+  <div class="wrapper">
+    <div class="container" id="container">
+      <img src="before.png" alt="Before orthomosaic" />
 
-<div class="container" id="container">
-    <img src="before.png">
-    <div class="after" id="after">
-        <img src="after.png">
+      <div class="after" id="after">
+        <img src="after.png" alt="After orthomosaic" />
+      </div>
+
+      <div class="label before">Before</div>
+      <div class="label after-label">After</div>
+
+      <div class="slider" id="slider">
+        <div class="handle">↔</div>
+      </div>
     </div>
-    <div class="slider" id="slider"></div>
-</div>
+  </div>
 
-<script>
-const slider = document.getElementById("slider");
-const after = document.getElementById("after");
-const container = document.getElementById("container");
+  <script>
+    const container = document.getElementById("container");
+    const after = document.getElementById("after");
+    const slider = document.getElementById("slider");
 
-let isDragging = false;
+    let dragging = false;
 
-slider.addEventListener("mousedown", () => isDragging = true);
-window.addEventListener("mouseup", () => isDragging = false);
+    function setSliderPosition(clientX) {
+      const rect = container.getBoundingClientRect();
+      let x = clientX - rect.left;
 
-window.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
+      if (x < 0) x = 0;
+      if (x > rect.width) x = rect.width;
 
-    const rect = container.getBoundingClientRect();
-    let x = e.clientX - rect.left;
+      const percent = (x / rect.width) * 100;
 
-    if (x < 0) x = 0;
-    if (x > rect.width) x = rect.width;
+      after.style.width = percent + "%";
+      slider.style.left = percent + "%";
+    }
 
-    after.style.width = x + "px";
-    slider.style.left = x + "px";
-});
-</script>
+    function startDrag(e) {
+      dragging = true;
+      if (e.touches && e.touches.length > 0) {
+        setSliderPosition(e.touches[0].clientX);
+      } else {
+        setSliderPosition(e.clientX);
+      }
+    }
 
+    function drag(e) {
+      if (!dragging) return;
+      if (e.touches && e.touches.length > 0) {
+        setSliderPosition(e.touches[0].clientX);
+      } else {
+        setSliderPosition(e.clientX);
+      }
+    }
+
+    function endDrag() {
+      dragging = false;
+    }
+
+    container.addEventListener("mousedown", startDrag);
+    window.addEventListener("mousemove", drag);
+    window.addEventListener("mouseup", endDrag);
+
+    container.addEventListener("touchstart", startDrag, { passive: true });
+    window.addEventListener("touchmove", drag, { passive: true });
+    window.addEventListener("touchend", endDrag);
+
+    window.addEventListener("load", () => {
+      setSliderPosition(container.getBoundingClientRect().left + container.offsetWidth / 2);
+    });
+  </script>
 </body>
 </html>
