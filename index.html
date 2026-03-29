@@ -57,10 +57,12 @@
       pointer-events: none;
     }
 
+    /* THIS IS THE FIX */
     .after-layer img {
       width: 100%;
-      height: auto;
+      height: 100%;           /* forces it to exactly match the container height */
       display: block;
+      object-fit: cover;      /* ensures perfect fill + overlay even if the two PNGs have tiny ratio differences */
     }
 
     .slider-line {
@@ -185,10 +187,10 @@
       dragging = false;
     });
 
+    // Initial position at 50%
     window.addEventListener("load", () => {
-      setSliderFromClientX(
-        container.getBoundingClientRect().left + container.getBoundingClientRect().width / 2
-      );
+      const rect = container.getBoundingClientRect();
+      setSliderFromClientX(rect.left + rect.width / 2);
     });
   </script>
 </body>
