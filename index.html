@@ -144,33 +144,48 @@
     const labelAfter = document.getElementById("labelAfter");
 
     let dragging = false;
+    let currentPercent = 50;           // keeps track of current slider position
+    let leftLabelPercent = 0;          // % position of the left "Before" label
+    let rightLabelPercent = 100;       // % position of the right "After" label
 
-    function setSliderFromClientX(clientX) {
+    function updateLabelPositions() {
       const rect = container.getBoundingClientRect();
-      let x = clientX - rect.left;
+      const beforeRect = labelBefore.getBoundingClientRect();
+      const afterRect = labelAfter.getBoundingClientRect();
 
-      if (x < 0) x = 0;
-      if (x > rect.width) x = rect.width;
+      // Use center of each label so it switches exactly when the slider passes the text
+      leftLabelPercent = ((beforeRect.left + beforeRect.width / 2) - rect.left) / rect.width * 100;
+      rightLabelPercent = ((afterRect.left + afterRect.width / 2) - rect.left) / rect.width * 100;
+    }
 
-      const percent = (x / rect.width) * 100;
+    function setSlider(percent) {
+      if (percent < 0) percent = 0;
+      if (percent > 100) percent = 100;
+
+      currentPercent = percent;
       const rightInset = 100 - percent;
 
-      // Update the after image reveal (left side = after, right side = before)
+      // Reveal "after.png" on the left side of the slider
       afterLayer.style.clipPath = `inset(0 ${rightInset}% 0 0)`;
       afterLayer.style.webkitClipPath = `inset(0 ${rightInset}% 0 0)`;
       sliderLine.style.left = `${percent}%`;
 
-      // === DYNAMIC LABELS ===
-      // When slider is far left (almost no "after" revealed) → both labels say "Before"
-      // As soon as enough "after" is revealed (past ~25%), the right label switches to "After"
-      labelBefore.textContent = "Before";
-      if (percent < 25) {
-        labelAfter.textContent = "Before";
-      } else {
-        labelAfter.textContent = "After";
-      }
+      // Dynamic labels — change to "After" ONLY after the slider passes that label
+      labelBefore.textContent = percent > leftLabelPercent ? "After" : "Before";
+      labelAfter.textContent = percent > rightLabelPercent ? "After" : "Before";
     }
 
+    function setSliderFromClientX(clientX) {
+      const rect = container.getBoundingClientRect();
+      let x = clientX - rect.left;
+      if (x < 0) x = 0;
+      if (x > rect.width) x = rect.width;
+
+      const percent = (x / rect.width) * 100;
+      setSlider(percent);
+    }
+
+    // Mouse
     container.addEventListener("mousedown", (e) => {
       dragging = true;
       setSliderFromClientX(e.clientX);
@@ -181,10 +196,9 @@
       setSliderFromClientX(e.clientX);
     });
 
-    window.addEventListener("mouseup", () => {
-      dragging = false;
-    });
+    window.addEventListener("mouseup", () => { dragging = false; });
 
+    // Touch
     container.addEventListener("touchstart", (e) => {
       dragging = true;
       setSliderFromClientX(e.touches[0].clientX);
@@ -195,14 +209,17 @@
       setSliderFromClientX(e.touches[0].clientX);
     }, { passive: true });
 
-    window.addEventListener("touchend", () => {
-      dragging = false;
+    window.addEventListener("touchend", () => { dragging = false; });
+
+    // Initial setup + handle window resize (so labels stay accurate)
+    window.addEventListener("load", () => {
+      updateLabelPositions();
+      setSlider(50);                    // start in the middle
     });
 
-    // Initial position at 50%
-    window.addEventListener("load", () => {
-      const rect = container.getBoundingClientRect();
-      setSliderFromClientX(rect.left + rect.width / 2);
+    window.addEventListener("resize", () => {
+      updateLabelPositions();
+      setSlider(currentPercent);        // re-apply current position after resize
     });
   </script>
 </body>
